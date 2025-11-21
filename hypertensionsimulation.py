@@ -12,9 +12,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# -----------------------------
-# Parameters you may edit
-# -----------------------------
+# Parameters:
 SEED = 42
 N = 100_000                    # cohort size
 ITERS = 300                    # Monte Carlo iterations per scenario
@@ -53,10 +51,6 @@ PREV_BY_RACE = {"White": 0.30, "Black": 0.40, "Hispanic": 0.28, "Other": 0.30}
 def assign_htn_from_lookup(df: pd.DataFrame) -> np.ndarray:
     p = df["race"].map(PREV_BY_RACE).values
     return (np.random.rand(len(df)) < p).astype(int)
-
-# -----------------------------
-# Logistic baseline for HTN with calibration
-# -----------------------------
 def sigmoid(x): return 1.0 / (1.0 + np.exp(-x))
 
 def baseline_logit(df: pd.DataFrame, intercept: float) -> np.ndarray:
@@ -83,9 +77,6 @@ def calibrate_intercept(df: pd.DataFrame, target_prev=TARGET_PREV, tol=1e-5, max
         else: lo = mid
     return 0.5*(lo+hi)
 
-# -----------------------------
-# Care pathway simulation
-# -----------------------------
 def simulate_once(df: pd.DataFrame,
                   intercept: float = None,
                   diag_rel_increase: float = 0.0,
@@ -148,9 +139,6 @@ def run_scenario(df: pd.DataFrame, iters: int, scenario: str, intercept: float, 
         )
     return pd.DataFrame(rows)
 
-# -----------------------------
-# Helpers for CI and plotting
-# -----------------------------
 def mean_ci(series: pd.Series, alpha=0.05):
     m = series.mean()
     s = series.std(ddof=1)
@@ -173,9 +161,6 @@ def save_bar(figpath, labels, values, ylabel, title):
     plt.savefig(figpath, dpi=300, bbox_inches="tight", pad_inches=0.1)
     plt.close()
 
-# -----------------------------
-# Run everything
-# -----------------------------
 set_seed(SEED)
 ensure_dir(OUTDIR)
 cohort = synthesize_cohort(N)
@@ -194,9 +179,6 @@ for sc in scenarios:
     results[sc] = df_res
 runtime_total = time.time() - t0
 
-# -----------------------------
-# Aggregate and export
-# -----------------------------
 agg_rows = []
 for sc, df_res in results.items():
     m_prev, lo_prev, hi_prev = mean_ci(df_res["prevalence"])
@@ -257,9 +239,6 @@ save_bar(os.path.join(OUTDIR, "fig_controlled_treated.png"),
          ylabel="Control among treated (fraction)",
          title="Control Rate Among Treated")
 
-# -----------------------------
-# Clean print for abstract
-# -----------------------------
 def pct(x): return f"{100*x:.1f}%"
 
 baseline = agg[agg["scenario"]=="baseline"].iloc[0]
@@ -267,7 +246,7 @@ screen   = agg[agg["scenario"]=="screening"].iloc[0]
 adh      = agg[agg["scenario"]=="adherence"].iloc[0]
 combo    = agg[agg["scenario"]=="combined"].iloc[0]
 
-print("\nABSTRACT NUMBERS")
+print("\NUMBERS")
 print("----------------")
 print(f"Cohort N = {N}, iterations = {ITERS}, total wall time ~ {runtime_total:.1f} s")
 if CAL_INTERCEPT is not None:
@@ -308,3 +287,4 @@ with open(os.path.join(OUTDIR, "run_metadata.json"), "w") as f:
     }, f, indent=2)
 
 print(f"\nFiles written to: {OUTDIR}")
+
